@@ -354,11 +354,10 @@
     <!-- Footer Info -->
     <div class="footer-section">
       <div class="max-w-4xl mx-auto">
-        <div class="footer-title">Удаление информации</div>
+        <div class="footer-title">ОТКАЗ ОТ ОТВЕТСТВЕННОСТИ</div>
         <div class="footer-text">
-          <div>1. Запустите бота для удаления данных</div>
-          <div>2. Выберите "Мой профиль"</div>
-          <div>3. Нажмите "Скрыть информацию"</div>
+          <div>DataTrace является поисковой системой и не несет ответственности за данные, найденные в открытых источниках.</div>
+          <div>Для удаления информации обращайтесь к первоисточнику.</div>
         </div>
       </div>
     </div>
@@ -414,35 +413,48 @@
       }
     }
 
-    modeLeaks.addEventListener('click', () => {
-      currentMode = 'leaks';
-      modeLeaks.classList.add('active');
-      modeCompany.classList.remove('active');
-      
-      // Показываем все опции для поиска утечек
-      fieldSel.innerHTML = `
-        <option value="phone">Телефон</option>
-        <option value="email">Email</option>
-        <option value="vk">VK</option>
-        <option value="ok">Одноклассники</option>
-        <option value="inn">ИНН</option>
-        <option value="snils">СНИЛС</option>
-      `;
-      updatePlaceholder();
-      updateModeInterface();
-    });
+    function switchMode(newMode) {
+        if (newMode === currentMode) {
+            return; // No change
+        }
 
-    modeCompany.addEventListener('click', () => {
-      currentMode = 'company';
-      modeCompany.classList.add('active');
-      modeLeaks.classList.remove('active');
-      
-      // Показываем только ИНН для проверки компании
-      fieldSel.innerHTML = `<option value="inn">ИНН</option>`;
-      fieldSel.value = 'inn';
-      updatePlaceholder();
-      updateModeInterface();
-    });
+        if (results.innerHTML.trim() !== '' || q.value.trim() !== '') {
+            if (!confirm('Вы уверены, что хотите сменить режим? Введенные данные и результаты поиска будут очищены.')) {
+                return; // User cancelled
+            }
+        }
+
+        currentMode = newMode;
+        // Clear previous results and input
+        q.value = '';
+        results.innerHTML = '';
+        document.getElementById('summary').style.display = 'none';
+        document.getElementById('summaryBody').innerHTML = '';
+
+
+        if (newMode === 'leaks') {
+            modeLeaks.classList.add('active');
+            modeCompany.classList.remove('active');
+            fieldSel.innerHTML = `
+                <option value="phone">Телефон</option>
+                <option value="email">Email</option>
+                <option value="vk">VK</option>
+                <option value="ok">Одноклассники</option>
+                <option value="inn">ИНН</option>
+                <option value="snils">СНИЛС</option>
+            `;
+        } else { // company mode
+            modeCompany.classList.add('active');
+            modeLeaks.classList.remove('active');
+            fieldSel.innerHTML = `<option value="inn">ИНН</option>`;
+            fieldSel.value = 'inn';
+        }
+        updatePlaceholder();
+        updateModeInterface();
+    }
+
+    modeLeaks.addEventListener('click', () => switchMode('leaks'));
+    modeCompany.addEventListener('click', () => switchMode('company'));
 
     fastMode.addEventListener('click', () => {
       isFastMode = !isFastMode;
@@ -497,31 +509,137 @@
         <div class="result-header" onclick="toggleResult(this)">
           <div class="result-title">${title}</div>
           <div class="flex items-center gap-3">
+            ${status === 'danger' ? `<button class="btn-secondary" style="font-size: 0.7rem; padding: 0.2rem 0.5rem;" onclick="showDeletionInfo(event, '${title}')">УДАЛИТЬ</button>` : ''}
             <span class="status-badge ${statusClass}">${statusText}</span>
             <span class="caret">▶</span>
           </div>
         </div>
         <div class="result-body">
-          ${formatResultData(data)}
+          ${formatResultData(data, title)}
         </div>
       `;
       
       return item;
     }
 
-    function formatResultData(data) {
+    function showDeletionInfo(event, sourceName) {
+        event.stopPropagation();
+
+        // Create modal elements
+        const modalBackdrop = document.createElement('div');
+        modalBackdrop.style.cssText = 'display: block; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.4);';
+
+        const modalContent = document.createElement('div');
+        modalContent.style.cssText = 'background-color: #fefefe; margin: 15% auto; padding: 20px; border: 1px solid #888; width: 80%; max-width: 600px; font-family: "PT Mono", monospace; color: black;';
+
+        const closeButton = document.createElement('span');
+        closeButton.innerHTML = '&times;';
+        closeButton.style.cssText = 'color: #aaa; float: right; font-size: 28px; font-weight: bold; cursor: pointer;';
+
+        const title = document.createElement('h2');
+        title.textContent = 'Инструкция по удалению данных';
+        title.style.cssText = 'font-size: 1.5rem; font-weight: bold; margin-bottom: 1rem;';
+
+        const body = document.createElement('div');
+        body.innerHTML = `
+          <p>Поскольку мы являемся поисковой системой, мы не храним ваши данные. Мы только ищем их в открытых источниках.</p>
+          <p>Для удаления ваших данных из источника <strong>${sourceName}</strong>, вам необходимо:</p>
+          <ol style="list-style-type: decimal; padding-left: 2rem; margin-top: 1rem;">
+            <li>Перейти на сайт или в приложение источника.</li>
+            <li>Найти раздел поддержки или обратной связи.</li>
+            <li>Написать запрос на удаление ваших данных в соответствии с законодательством о персональных данных.</li>
+          </ol>
+          <p style="margin-top: 1rem; font-size: 0.9rem; color: #6b7280;">Примечание: Процесс удаления может занять время и отличаться для разных источников.</p>
+        `;
+
+        // Assemble modal
+        modalContent.appendChild(closeButton);
+        modalContent.appendChild(title);
+        modalContent.appendChild(body);
+        modalBackdrop.appendChild(modalContent);
+        document.body.appendChild(modalBackdrop);
+
+        // Close functionality
+        const closeModal = () => document.body.removeChild(modalBackdrop);
+        closeButton.onclick = closeModal;
+        modalBackdrop.onclick = function(event) {
+          if (event.target == modalBackdrop) {
+            closeModal();
+          }
+        }
+    }
+
+    function formatResultData(data, sourceName) {
       if (!data || typeof data !== 'object') {
         return '<div style="color: #6b7280;">Нет данных</div>';
       }
       
-      let html = '<div class="data-grid">';
-      for (const [key, value] of Object.entries(data)) {
-        if (value && value !== 'null' && value !== 'undefined') {
-          html += `
-            <div class="data-label">${key}</div>
-            <div class="data-value">${formatValue(value)}</div>
-          `;
-        }
+      let html = '';
+
+      // Custom formatter for LeakOsint
+      if (sourceName === 'LeakOsint' && Array.isArray(data)) {
+        html += '<div class="data-grid">';
+        data.forEach(leak => {
+          if (leak.db) {
+            html += `<div class="data-label" style="grid-column: 1 / -1; background: #f3f4f6; padding: 0.5rem; font-weight: bold; color: black;">ИСТОЧНИК: ${leak.db}</div>`;
+          }
+          if (leak.info) {
+             html += `<div class="data-label">ИНФО</div><div class="data-value">${leak.info}</div>`;
+          }
+          if (leak.data && Array.isArray(leak.data)) {
+            leak.data.forEach(field => {
+                for (const [key, value] of Object.entries(field)) {
+                     if (value && value !== 'null' && value !== 'undefined') {
+                        html += `
+                            <div class="data-label">${key.toUpperCase()}</div>
+                            <div class="data-value">${formatValue(value)}</div>
+                        `;
+                    }
+                }
+            });
+          }
+        });
+        html += '</div>';
+        return html || '<div style="color: #6b7280;">Нет данных</div>';
+      }
+
+      // Generic formatter
+      html += '<div class="data-grid">';
+      if (Array.isArray(data)) {
+          data.forEach(item => {
+              if(typeof item === 'object' && item !== null) {
+                  for (const [key, value] of Object.entries(item)) {
+                    if (value && value !== 'null' && value !== 'undefined') {
+                      html += `
+                          <div class="data-label">${key.toUpperCase()}</div>
+                          <div class="data-value">${formatValue(value)}</div>
+                      `;
+                    }
+                  }
+                  html += `<div style="grid-column: 1 / -1; height: 1rem;"></div>`;
+
+              } else {
+                  html += `<div class="data-value" style="grid-column: 1 / -1;">${formatValue(item)}</div>`
+              }
+          });
+      } else {
+          for (const [key, value] of Object.entries(data)) {
+            if (value && value !== 'null' && value !== 'undefined') {
+              if (typeof value === 'object' && value !== null && !Array.isArray(value) && value.data && value.count) {
+                 html += `<div class="data-label" style="grid-column: 1 / -1; background: #f3f4f6; padding: 0.5rem; font-weight: bold; color: black;">${key.toUpperCase()}: ${value.count} найдено</div>`;
+                 value.data.forEach(item => {
+                     for(const [k, v] of Object.entries(item)) {
+                         html += `<div class="data-label">${k.toUpperCase()}</div><div class="data-value">${formatValue(v)}</div>`;
+                     }
+                 });
+              } else {
+                  html += `
+                    <div class="data-label">${key.toUpperCase()}</div>
+                    <div class="data-value">${formatValue(value)}</div>
+                  `;
+              }
+            }
+          }
       }
       html += '</div>';
       
