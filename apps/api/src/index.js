@@ -12,13 +12,13 @@ app.use(cors());
 app.use(express.json({ limit: '2mb' }));
 app.use(express.static(path.join(__dirname, '..', 'public')));
 
-// Load tokens from env or fallback to docs (for local demo only)
+// Load tokens from env
 const TOKENS = {
-  ITP: process.env.ITP_TOKEN || '91b2c57abce2ca84f8ca068df2eda054',
-  DYXLESS: process.env.DYXLESS_TOKEN || '38a634df-2317-4c8c-beb7-7ca4fd97f1e1',
-  LEAKOSINT: process.env.LEAKOSINT_TOKEN || '466496291:r571DgY3',
-  USERSBOX: process.env.USERSBOX_TOKEN || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjcmVhdGVkX2F0IjoxNzUyNTg0NTk5LCJhcHBfaWQiOjE3NTI1ODQ1OTl9.FqMGisO5V1xW2Xr8Ri5mQryy5I1sdBBWzuckCEPpK58',
-  VEKTOR: process.env.VEKTOR_TOKEN || 'C45vAVuDkzNax2BF4sz8o4KEAZFBIIK'
+  ITP: process.env.ITP_TOKEN || '',
+  DYXLESS: process.env.DYXLESS_TOKEN || '',
+  LEAKOSINT: process.env.LEAKOSINT_TOKEN || '',
+  USERSBOX: process.env.USERSBOX_TOKEN || '',
+  VEKTOR: process.env.VEKTOR_TOKEN || ''
 };
 
 const ITP_BASE = process.env.ITP_BASE || 'https://datatech.work';
@@ -51,9 +51,9 @@ if (OPENAI_API_KEY && OPENAI_API_KEY.trim() !== '') {
 
 // Company check providers
 const DATANEWTON_BASE = process.env.DATANEWTON_BASE || 'https://api.datanewton.ru/v1';
-const DATANEWTON_KEY = process.env.DATANEWTON_KEY || 'UeHgYI7e4ejX';
+const DATANEWTON_KEY = process.env.DATANEWTON_KEY || '';
 const CHECKO_BASE = process.env.CHECKO_BASE || 'https://api.checko.ru/v2';
-const CHECKO_KEY = process.env.CHECKO_KEY || process.env.CHECKO_API_KEY || 'iWq90n732rGN2rex';
+const CHECKO_KEY = process.env.CHECKO_KEY || process.env.CHECKO_API_KEY || '';
 
 function extractUsernameIfSocial(field, query) {
   if (!query || (field !== 'vk' && field !== 'ok')) return query;
